@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>AEA_04</title>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+		<style type="text/css">
+			body {
+			  background: #2a2a2b;
+			  color: #fff;
+			  text-align: center;
+			  font-family: Arial, Helvetica;
+			}
+
+			.button {
+			  background: #1abc9c;
+			  color: #fff;
+			  text-align: center;
+			  font-family: Arial, Helvetica;
+			  font-size: 1.5em;
+			  text-decoration: none;
+			  border-radius: 10px;
+			  position: relative;
+			  display: inline-block;
+			  vertical-align: middle;
+			  margin: 10px;
+			  padding: 7.5px;
+			}
+			
+			.mediumResult {
+
+				font-size: 1.5em;
+				margin-top: 1em;
+			}
+
+			.container {
+
+				margin-top: 10em;
+			}
+
+			.result {
+
+				margin-top: 5em;
+				display: flex;
+  				flex-direction: row;
+  				position:absolute;
+				margin-left: 30%;
+				margin-right: 30%;
+			}
+
+			.result1 {
+
+				font-size: 1.1em;
+			}
+
+			.result2 {
+
+				margin-top: 3em;
+				margin-left: 10em;
+				font-size: 1.1em;
+			}
+
+			.big {
+			 	font-size: 1.2em;
+			}
+
+			.square {
+			  width: .7em;
+			  height: .7em;
+			  margin: .5em;
+			  display: inline-block;
+			}
+
+			/* Custom dropdown */
+			.custom-dropdown {
+			  position: relative;
+			  display: inline-block;
+			  vertical-align: middle;
+			}
+
+			.custom-dropdown select {
+			  background-color: #1abc9c;
+			  color: #fff;
+			  font-size: inherit;
+			  padding: .5em;
+			  padding-right: 2.5em; 
+			  border: 0;
+			  margin: 0;
+			  border-radius: 3px;
+			  text-indent: 0.01px;
+			  text-overflow: '';
+			  -webkit-appearance: button;
+			}
+
+			.custom-dropdown::before,
+			.custom-dropdown::after {
+			  content: "";
+			  position: absolute;
+			  pointer-events: none;
+			}
+
+			.custom-dropdown::after {
+			  content: "\25BC";
+			  height: 1em;
+			  font-size: .625em;
+			  line-height: 1;
+			  right: 1.2em;
+			  top: 50%;
+			  margin-top: -.5em;
+			}
+
+			.custom-dropdown::before {
+			  width: 2em;
+			  right: 0;
+			  top: 0;
+			  bottom: 0;
+			  border-radius: 0 3px 3px 0;
+			}
+
+			.custom-dropdown select[disabled] {
+			  color: rgba(0,0,0,.3);
+			}
+
+			.custom-dropdown select[disabled]::after {
+			  color: rgba(0,0,0,.1);
+			}
+		</style>
+	</head>
+	<body>
+
+		<div class="container">
+
+			<span id="selectComarques" class="custom-dropdown big"></span>
+			<span id="selectHora" class="custom-dropdown big">
+				<select id='hora'>
+					<option value="1">Mati</option>
+					<option value="2">Tarda</option>
+				</select>
+			</span>
+			<a href="#" id="button" class="button">Obtindre previsió</a>
+
+		</div>
+		
+		<div class="result">
+			<div class="result1">
+				<div id="resultatTemp"></div>
+				<div id="resultatSimbol" class="mediumResult"></div>
+			</div>
+
+			<div class="result2">
+				<div id="resultatCalamarsa"></div>
+				<div id="resultatPrecipitacio" style="margin-top: 1em;"></div>
+				<div id="resultatIntensitat" style="margin-top: 1em;"></div>
+			</div>
+		</div>
+
+		<script type="text/javascript">
+
+			window.onload = function() {
+				
+				loadDoc();
+
+				//CARREGUEM LES COMARQUES DEL XML DINS D'UN SELECT
+				function loadDoc() {
+
+					//OBRA LA CONEXIO A LA API
+					$.ajax({url: "http://static-m.meteo.cat/content/opendata/ctermini_comarcal.xml", success: function(result) {
+
+						//OBTENIM L'ETIQUETA DE LA COMARCA
+						var comarca= result.getElementsByTagName("comarca");
+
+						sel = "<select id='comarques'>";
+
+						for (var i = 0; i <comarca.length; i++) {
+							
+							//PRINTEM EL NOM DE LA COMARCA QUE ES TROBA DINS D'UN ATRIBUT DE L'ETIQUETA
+						    sel += "<option value="+ i +">"+ comarca[i].getAttribute('nomCOMARCA') +"</option>";
+						}
+
+						sel += "</select>";
+
+						$("#selectComarques").html(sel);
+					}});
+				}
+
+				//OBTE LE PREVISIO DE LA COMARCA SELECCIONADA EN EL SELECT ANTERIOR
+				$("#button").click(function(){
+
+					var selectedOption = document.getElementById("comarques").value;
+					var selectedOptionHorari = document.getElementById("hora").value;
+					
+					//OBRA LA CONEXIO A LA API
+					$.ajax({url: "http://static-m.meteo.cat/content/opendata/ctermini_comarcal.xml", success: function(result) {
+
+						//OBTENIM LES ETIQUETES DE PREDICCIO I SIMBOL
+						var prediccio= result.getElementsByTagName("prediccio");
+						var simbol= result.getElementsByTagName("simbol");
+						var calamarsa= result.getElementsByTagName("calamarsa");
+						var precipitacio= result.getElementsByTagName("precipitacio");
+						var intensitat= result.getElementsByTagName("intensitat");
+
+						//OBTENIM LES DADES QUE ES SON ATRIBUTS DE L'ETIQUETA "VARIABLE"
+						var tempMax= prediccio[selectedOption].childNodes[0].getAttribute('tempmax');
+						var tempMin= prediccio[selectedOption].childNodes[0].getAttribute('tempmin');
+
+						var simbolMati= prediccio[selectedOption].childNodes[0].getAttribute('simbolmati');
+						var simbolTarda= prediccio[selectedOption].childNodes[0].getAttribute('simboltarda');
+						var idSimbolMati= simbolMati.substring(0, 1);
+						var idSimbolTarda= simbolTarda.substring(0, 1);
+
+						var calamarsaMati= prediccio[selectedOption].childNodes[0].getAttribute('probcalamati');
+						var calamarsaTarda= prediccio[selectedOption].childNodes[0].getAttribute('probcalatarda');
+
+						var precipitacioMati= prediccio[selectedOption].childNodes[0].getAttribute('probprecipitaciomati');
+						var precipitacioTarda= prediccio[selectedOption].childNodes[0].getAttribute('probprecipitaciotarda');
+
+						var intensitatPrecMati= prediccio[selectedOption].childNodes[0].getAttribute('intensitatprecimati');
+						var intensitatPrecTarda= prediccio[selectedOption].childNodes[0].getAttribute('intensitatprecitarda');
+
+						//Text del simbol
+						var textSimbolMati= simbol[idSimbolMati -1].getAttribute('nomsimbol');
+						var textSimbolTarda= simbol[idSimbolTarda -1].getAttribute('nomsimbol');
+
+						//Text de calamarsa
+						var textCalamarsaMati= calamarsa[calamarsaMati -1].getAttribute('nomprobcalamati');
+						var textCalamarsaTarda= calamarsa[calamarsaTarda -1].getAttribute('nomprobcalatarda');
+
+						//Text de precipitacio
+						var textPrecipitacioMati= precipitacio[precipitacioMati -1].getAttribute('nomprobprecipitaciomati');
+						var textPrecipitacioTarda= precipitacio[precipitacioTarda -1].getAttribute('nomprobprecipitaciotarda');
+						
+						//Text d'intensitat
+						if (intensitatPrecMati != "null") { var textIntensitatMati= intensitat[intensitatPrecMati -1].getAttribute('nomintensitatprecimati'); }
+						if (intensitatPrecTarda != "null") { var textIntensitatTarda= intensitat[intensitatPrecMati -1].getAttribute('nomintensitatprecitarda'); }
+						
+						
+
+						$("#resultatTemp").html("T Maxima: "+ tempMax +"Cº / T Minima: "+ tempMin +"Cº");
+
+						if (selectedOptionHorari == 1) {
+							$("#resultatSimbol").html('<img src="images/'+ simbolMati +'"><div>'+ textSimbolMati +'</div>');
+							$("#resultatCalamarsa").html("Calamarsa: "+ textCalamarsaMati);
+							$("#resultatPrecipitacio").html("Precipitacio: "+ textPrecipitacioMati);
+							if (intensitatPrecMati != "null") {$("#resultatIntensitat").html("Intensitat de precipitacio: "+ textIntensitatMati);}
+						}else{
+							$("#resultatSimbol").html('<img src="images/'+ simbolTarda +'"><div>'+ textSimbolTarda +'</div>');
+							$("#resultatCalamarsa").html("Calamarsa: "+ textCalamarsaTarda);
+							$("#resultatPrecipitacio").html("Precipitacio: "+ textPrecipitacioTarda);
+							if (intensitatPrecTarda != "null") {$("#resultatIntensitat").html("Intensitat de precipitacio: "+ textIntensitatTarda);}
+						}
+					}});
+				});
+			}
+		</script>
+	</body>
+</html>
